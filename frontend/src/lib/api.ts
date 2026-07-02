@@ -31,9 +31,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      localStorage.removeItem('token')
-      // Only redirect if we are not already on the login page
+      // Only clean token and redirect if we are not already on the login page.
+      // This prevents stale background retries from wiping out the new token during login.
       if (window.location.pathname !== ROUTES.LOGIN) {
+        localStorage.removeItem('token')
         window.location.href = ROUTES.LOGIN
       }
     }
