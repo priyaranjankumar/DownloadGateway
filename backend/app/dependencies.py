@@ -15,6 +15,9 @@ auth_service = AuthService()
 
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> str:
     """Decode and validate a JWT from the request header, returning the username."""
+    import structlog
+    l = structlog.get_logger(__name__)
+    l.info("jwt_token_received", token=token)
     try:
         payload = AuthService.decode_token(token)
         username: str | None = payload.get("sub")
