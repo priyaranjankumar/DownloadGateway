@@ -28,6 +28,7 @@ export function useLogin() {
       return data
     },
     onSuccess: (data) => {
+      localStorage.setItem('loginTime', Date.now().toString())
       localStorage.setItem('token', data.access_token)
       queryClient.clear()
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CURRENT_USER })
