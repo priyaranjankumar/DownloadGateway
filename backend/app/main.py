@@ -178,6 +178,15 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     
+    @app.middleware("http")
+    async def log_request_headers(request, call_next):
+        if request.url.path.startswith("/api"):
+            auth_header = request.headers.get("authorization")
+            presence = "PRESENT" if auth_header else "MISSING"
+            preview = auth_header[:25] + "..." if auth_header else ""
+            log.info("incoming_api_request", path=request.url.path, auth_header_presence=presence, auth_header_preview=preview)
+        return await call_next(request)
+
     # Mount API routers under /api
     app.include_router(auth.router, prefix="/api")
     app.include_router(vpn.router, prefix="/api")
