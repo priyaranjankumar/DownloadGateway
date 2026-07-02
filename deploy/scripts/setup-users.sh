@@ -37,8 +37,8 @@ chown aria2:aria2 /var/lib/aria2/aria2.session
 
 # Download directories
 mkdir -p /downloads/{complete,incomplete,torrents,watch,metadata}
-chown -R aria2:aria2 /downloads
-chmod -R 775 /downloads
+chown -R aria2:aria2 /downloads/{complete,incomplete,torrents,watch,metadata}
+chmod -R 775 /downloads/{complete,incomplete,torrents,watch,metadata}
 
 # Add gateway user to aria2 group (so it can read download files)
 usermod -aG aria2 gateway
