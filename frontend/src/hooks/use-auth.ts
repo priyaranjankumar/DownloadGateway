@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import api from '@/lib/api'
-import { QUERY_KEYS, ROUTES } from '@/lib/constants'
+import { QUERY_KEYS } from '@/lib/constants'
 import { LoginRequest, TokenResponse, UserResponse, SetupRequest, ChangePasswordRequest } from '@/types/auth'
 
 export function useCurrentUser() {
@@ -21,39 +21,37 @@ export function useCurrentUser() {
 }
 
 export function useLogin() {
-  const queryClient = useQueryClient()
   return useMutation<TokenResponse, Error, LoginRequest>({
     mutationFn: async (credentials) => {
       const { data } = await api.post<TokenResponse>('/auth/login', credentials)
       return data
     },
     onSuccess: (data) => {
-      localStorage.setItem('loginTime', Date.now().toString())
       localStorage.setItem('token', data.access_token)
-      queryClient.clear()
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CURRENT_USER })
+      // Force a FULL page reload. This is critical:
+      // - Destroys all React state and React Query cache
+      // - Kills all in-flight/retrying background HTTP requests
+      // - The fresh page load reads the token from localStorage
+      // - All new queries fire with the Authorization header
+      // Using navigate() instead causes a race condition where stale
+      // unauthenticated requests return 401 and interfere with the new session.
+      window.location.href = '/'
     },
   })
 }
 
 export function useLogout() {
-  const queryClient = useQueryClient()
   return () => {
     localStorage.removeItem('token')
-    queryClient.clear()
-    window.location.href = ROUTES.LOGIN
+    window.location.href = '/login'
   }
 }
 
 export function useSetup() {
-  const queryClient = useQueryClient()
   return useMutation<UserResponse, Error, SetupRequest>({
     mutationFn: async (payload) => {
       const { data } = await api.post<UserResponse>('/auth/setup', payload)
       return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CURRENT_USER })
     },
   })
 }

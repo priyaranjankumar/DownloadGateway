@@ -84,7 +84,7 @@ export default function LoginPage() {
             error: (err) => `Authentication failed: ${err.message}`,
           }
         )
-        navigate(ROUTES.DASHBOARD)
+        // Redirect is handled by useLogin's onSuccess (full page reload via window.location.href)
       } catch (err) {
         // Handled by toast.promise
       }

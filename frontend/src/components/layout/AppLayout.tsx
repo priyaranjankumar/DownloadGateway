@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Outlet, useNavigate } from 'react-router'
+import { useState } from 'react'
+import { Outlet, Navigate } from 'react-router'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import { useCurrentUser } from '@/hooks/use-auth'
@@ -8,22 +8,20 @@ import { ROUTES } from '@/lib/constants'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 
 export default function AppLayout() {
-  const { data: user, isLoading, isError } = useCurrentUser()
-  const navigate = useNavigate()
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
 
-  // Start the background WebSocket updates when layout mounts (logged in)
+  // Gate: if no token in localStorage, redirect to login immediately.
+  // This runs BEFORE any child components mount, preventing unauthenticated queries.
   const token = localStorage.getItem('token')
-  if (token) {
-    useWebSocket()
+  if (!token) {
+    return <Navigate to={ROUTES.LOGIN} replace />
   }
 
-  // Redirect to login if unauthenticated
-  useEffect(() => {
-    if (!token) {
-      navigate(ROUTES.LOGIN)
-    }
-  }, [token, navigate])
+  // Now that we know a token exists, fetch the current user to validate it.
+  const { data: user, isLoading, isError } = useCurrentUser()
+
+  // Start the background WebSocket connection
+  useWebSocket()
 
   if (isLoading) {
     return (
@@ -34,7 +32,7 @@ export default function AppLayout() {
     )
   }
 
-  if (isError || (!user && token)) {
+  if (isError || !user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[#0b0f19] text-center px-4">
         <h3 className="text-xl font-bold text-white mb-2">Session Expired</h3>
@@ -42,7 +40,7 @@ export default function AppLayout() {
         <button
           onClick={() => {
             localStorage.removeItem('token')
-            navigate(ROUTES.LOGIN)
+            window.location.href = ROUTES.LOGIN
           }}
           className="px-6 py-2.5 rounded-xl bg-[#4f46e5] hover:bg-[#4338ca] text-white text-sm font-medium transition-colors"
         >

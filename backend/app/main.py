@@ -217,7 +217,10 @@ def create_app() -> FastAPI:
             if catchall and os.path.isfile(file_path):
                 return FileResponse(file_path)
                 
-            return FileResponse(os.path.join(frontend_path, "index.html"))
+            return FileResponse(
+                os.path.join(frontend_path, "index.html"),
+                headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"}
+            )
             
     return app
 
