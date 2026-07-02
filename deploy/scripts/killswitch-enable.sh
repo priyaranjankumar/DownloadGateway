@@ -7,7 +7,15 @@ set -euo pipefail
 
 WG_IFACE="${WG_IFACE:-wg0}"
 WG_PORT="${WG_PORT:-51820}"
-LAN_SUBNET="${LAN_SUBNET:-192.168.1.0/24}"
+
+# Auto-detect default interface and its subnet to prevent lockouts on non-standard subnets
+DEFAULT_IFACE=$(ip route | grep default | awk '{print $5}' | head -n1 || echo "")
+DETECTED_SUBNET=""
+if [[ -n "$DEFAULT_IFACE" ]]; then
+    DETECTED_SUBNET=$(ip route | grep "$DEFAULT_IFACE" | grep -v default | grep link | awk '{print $1}' | head -n1 || echo "")
+fi
+
+LAN_SUBNET="${LAN_SUBNET:-${DETECTED_SUBNET:-192.168.1.0/24}}"
 
 echo "[Kill Switch] Enabling..."
 

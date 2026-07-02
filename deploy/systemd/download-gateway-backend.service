@@ -9,7 +9,7 @@ Type=simple
 User=gateway
 Group=gateway
 WorkingDirectory=/opt/download-gateway/backend
-ExecStart=/opt/download-gateway/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --log-level info
+ExecStart=/opt/download-gateway/backend/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1 --log-level info
 Restart=on-failure
 RestartSec=5
 

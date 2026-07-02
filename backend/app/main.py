@@ -7,11 +7,14 @@ from contextlib import asynccontextmanager
 from typing import Any
 import structlog
 
-from fastapi import FastAPI
+import os
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from app.config import settings
-from app.database import init_db, execute_query
+from app.database import init_db, execute_query, fetch_all
 from app.utils.logging import setup_logging
 from app.services.aria2 import Aria2Client, Aria2EventListener
 from app.services.ip_checker import IPCheckerService
@@ -114,6 +117,41 @@ async def lifespan(app: FastAPI):
     ip_checker.start()
     app.state.ip_checker = ip_checker
     
+    # 4. Check auto-connect settings on startup
+    try:
+        rows = await fetch_all("SELECT key, value FROM settings")
+        settings_dict = {row["key"]: row["value"] for row in rows} if rows else {}
+        
+        # Parse settings
+        vpn_auto = settings_dict.get("vpn_auto_connect", "false").lower() == "true"
+        vpn_server = settings_dict.get("vpn_auto_connect_server", "")
+        ks_auto = settings_dict.get("killswitch_auto_enable", "false").lower() == "true"
+        
+        if vpn_auto and vpn_server:
+            log.info("startup_vpn_auto_connect_trigger", server_id=vpn_server)
+            from app.services.vpn import VPNService
+            vpn_svc = VPNService()
+            await vpn_svc.connect(vpn_server)
+            
+        if ks_auto:
+            log.info("startup_killswitch_auto_enable_trigger")
+            from app.services.killswitch import KillSwitchService
+            ks_svc = KillSwitchService()
+            # Detect LAN subnet dynamically
+            import subprocess
+            try:
+                lan_sub = "192.168.1.0/24"
+                out = subprocess.check_output("ip route | grep default | awk '{print $5}' | head -n1", shell=True).decode().strip()
+                if out:
+                    sub_out = subprocess.check_output(f"ip route | grep {out} | grep -v default | grep link | awk '{{print $1}}' | head -n1", shell=True).decode().strip()
+                    if sub_out:
+                        lan_sub = sub_out
+                await ks_svc.enable(lan_sub, settings.wireguard_interface)
+            except Exception as e:
+                await ks_svc.enable(settings.lan_subnet, settings.wireguard_interface)
+    except Exception as e:
+        log.error("startup_auto_tasks_failed", error=str(e))
+        
     yield
     
     log.info("application_shutdown_cleanup")
@@ -152,6 +190,26 @@ def create_app() -> FastAPI:
     # Mount WebSocket router
     app.include_router(websocket.router)
     
+    # Serve index.html for SPA routing on any unmatched paths (excluding /api paths)
+    frontend_path = "/opt/download-gateway/frontend"
+    if os.path.exists(frontend_path):
+        # Mount assets folder first
+        assets_path = os.path.join(frontend_path, "assets")
+        if os.path.exists(assets_path):
+            app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
+            
+        @app.get("/{catchall:path}")
+        async def serve_spa(catchall: str):
+            if catchall.startswith("api"):
+                raise HTTPException(status_code=404, detail="API route not found")
+            
+            # Check if file exists in frontend folder (e.g. favicon.ico, etc.)
+            file_path = os.path.join(frontend_path, catchall)
+            if catchall and os.path.exists(file_path):
+                return FileResponse(file_path)
+                
+            return FileResponse(os.path.join(frontend_path, "index.html"))
+            
     return app
 
 app_instance = create_app()

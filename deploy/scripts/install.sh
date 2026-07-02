@@ -24,13 +24,16 @@ fi
 # --- Step 1: System packages ---
 echo "=== [1/8] Installing system packages ==="
 apt update
+apt install -y curl jq
+# Configure NodeSource repository for Node.js v20 (Tailwind v4 requires Node >= 20)
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt update
 apt install -y \
     python3 python3-venv python3-pip \
     aria2 \
     wireguard wireguard-tools \
     iptables \
-    nodejs npm \
-    curl jq \
+    nodejs \
     resolvconf
 
 echo "[OK] System packages installed"
@@ -79,7 +82,8 @@ echo ""
 echo "=== [5/8] Building frontend ==="
 
 cd "$PROJECT_DIR/frontend"
-npm ci
+rm -rf node_modules package-lock.json
+npm install
 npm run build
 
 # Copy built frontend to serve directory
