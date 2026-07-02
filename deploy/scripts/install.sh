@@ -60,8 +60,10 @@ echo "[OK] aria2 configured (RPC secret generated)"
 echo ""
 echo "=== [4/8] Installing backend ==="
 
-mkdir -p "$INSTALL_DIR"
-cp -r "$PROJECT_DIR/backend" "$INSTALL_DIR/backend"
+mkdir -p "$INSTALL_DIR/backend"
+# Clean up any nested backend folder from previous installation runs
+rm -rf "$INSTALL_DIR/backend/backend"
+cp -r "$PROJECT_DIR/backend/." "$INSTALL_DIR/backend/"
 
 cd "$INSTALL_DIR/backend"
 python3 -m venv .venv
@@ -139,8 +141,8 @@ echo "=== [8/8] Starting services ==="
 
 systemctl enable aria2.service
 systemctl enable download-gateway-backend.service
-systemctl start aria2.service
-systemctl start download-gateway-backend.service
+systemctl restart aria2.service
+systemctl restart download-gateway-backend.service
 
 echo "[OK] Services started"
 
