@@ -205,7 +205,7 @@ def create_app() -> FastAPI:
             
             # Check if file exists in frontend folder (e.g. favicon.ico, etc.)
             file_path = os.path.join(frontend_path, catchall)
-            if catchall and os.path.exists(file_path):
+            if catchall and os.path.isfile(file_path):
                 return FileResponse(file_path)
                 
             return FileResponse(os.path.join(frontend_path, "index.html"))
