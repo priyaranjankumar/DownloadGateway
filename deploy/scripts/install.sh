@@ -89,6 +89,7 @@ npm install
 npm run build
 
 # Copy built frontend to serve directory
+rm -rf "$INSTALL_DIR/frontend"
 mkdir -p "$INSTALL_DIR/frontend"
 cp -r dist/* "$INSTALL_DIR/frontend/"
 chown -R gateway:gateway "$INSTALL_DIR/frontend"
