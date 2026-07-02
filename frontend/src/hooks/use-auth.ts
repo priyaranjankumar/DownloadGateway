@@ -29,6 +29,7 @@ export function useLogin() {
     },
     onSuccess: (data) => {
       localStorage.setItem('token', data.access_token)
+      queryClient.clear()
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CURRENT_USER })
     },
   })
@@ -38,7 +39,7 @@ export function useLogout() {
   const queryClient = useQueryClient()
   return () => {
     localStorage.removeItem('token')
-    queryClient.setQueryData(QUERY_KEYS.CURRENT_USER, null)
+    queryClient.clear()
     window.location.href = ROUTES.LOGIN
   }
 }
