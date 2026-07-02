@@ -1,0 +1,22 @@
+# Python environment and caches
+backend/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+backend/.venv/
+backend/venv/
+backend/.env
+backend/data/*.db
+backend/data/*.sqlite
+
+# Frontend packages and build outputs
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/*.tsbuildinfo
+
+# OS and IDE files
+.DS_Store
+.vscode/
+.idea/
+*.log

@@ -1,0 +1,1 @@
+"""Download Gateway — FastAPI backend."""

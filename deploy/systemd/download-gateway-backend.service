@@ -1,0 +1,29 @@
+[Unit]
+Description=Download Gateway Backend (FastAPI)
+After=network.target aria2.service
+Requires=aria2.service
+Documentation=https://github.com/your-repo/download-gateway
+
+[Service]
+Type=simple
+User=gateway
+Group=gateway
+WorkingDirectory=/opt/download-gateway/backend
+ExecStart=/opt/download-gateway/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --log-level info
+Restart=on-failure
+RestartSec=5
+
+# Environment
+Environment=DG_SECRET_KEY=GENERATED_ON_INSTALL
+Environment=DG_ARIA2_RPC_SECRET=CHANGE_ME
+Environment=DG_DATABASE_PATH=/opt/download-gateway/data/gateway.db
+Environment=DG_DOWNLOAD_DIR=/downloads
+Environment=DG_LOG_LEVEL=INFO
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectHome=yes
+ReadWritePaths=/opt/download-gateway/data /downloads /var/log/aria2
+
+[Install]
+WantedBy=multi-user.target

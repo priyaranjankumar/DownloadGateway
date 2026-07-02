@@ -1,0 +1,13 @@
+[Unit]
+Description=VPN Kill Switch (iptables)
+Before=wg-quick@wg0.service
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/opt/download-gateway/deploy/scripts/killswitch-enable.sh
+ExecStop=/opt/download-gateway/deploy/scripts/killswitch-disable.sh
+
+[Install]
+WantedBy=multi-user.target

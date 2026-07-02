@@ -1,0 +1,24 @@
+[Unit]
+Description=aria2 Download Daemon
+After=network.target
+Documentation=https://aria2.github.io/manual/en/html/
+
+[Service]
+Type=simple
+User=aria2
+Group=aria2
+ExecStart=/usr/bin/aria2c --conf-path=/etc/aria2/aria2.conf
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/downloads /var/lib/aria2 /var/log/aria2
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

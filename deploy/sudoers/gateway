@@ -1,0 +1,20 @@
+# Sudoers configuration for the Download Gateway
+# Place this file at /etc/sudoers.d/gateway
+# Permissions: chmod 440 /etc/sudoers.d/gateway
+
+# Allow the gateway user to manage WireGuard VPN
+gateway ALL=(root) NOPASSWD: /usr/bin/wg-quick up *
+gateway ALL=(root) NOPASSWD: /usr/bin/wg-quick down *
+gateway ALL=(root) NOPASSWD: /usr/bin/wg show *
+
+# Allow the gateway user to manage iptables (for kill switch)
+gateway ALL=(root) NOPASSWD: /usr/sbin/iptables *
+gateway ALL=(root) NOPASSWD: /usr/sbin/iptables-save
+gateway ALL=(root) NOPASSWD: /usr/sbin/ip6tables *
+
+# Allow DNS management
+gateway ALL=(root) NOPASSWD: /usr/sbin/resolvconf *
+gateway ALL=(root) NOPASSWD: /usr/bin/resolvectl *
+
+# Allow reading WireGuard logs via journalctl
+gateway ALL=(root) NOPASSWD: /usr/bin/journalctl -u wg-quick@* *

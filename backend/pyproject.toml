@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "download-gateway"
+version = "1.0.0"
+description = "Download Gateway — self-hosted download manager with VPN integration"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "pydantic>=2.10",
+    "pydantic-settings>=2.7",
+    "PyJWT>=2.8",
+    "passlib[bcrypt]>=1.7.4",
+    "aiohttp>=3.11",
+    "psutil>=6.1",
+    "aiofiles>=24.1",
+    "aiosqlite>=0.20",
+    "python-multipart>=0.0.19",
+    "websockets>=14.1",
+    "structlog>=24.4",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
