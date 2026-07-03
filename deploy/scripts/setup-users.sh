@@ -37,8 +37,29 @@ chown aria2:aria2 /var/lib/aria2/aria2.session
 
 # Download directories
 mkdir -p /downloads/{complete,incomplete,torrents,watch,metadata}
-chown -R aria2:aria2 /downloads/{complete,incomplete,torrents,watch,metadata}
-chmod -R 775 /downloads/{complete,incomplete,torrents,watch,metadata}
+
+# Verify directories and permissions (W access check for service users)
+echo "=== Verifying download directories access ==="
+for dir in complete incomplete torrents watch metadata; do
+    target="/downloads/$dir"
+    if [ ! -d "$target" ]; then
+        echo "ERROR: $target directory does not exist!"
+        exit 1
+    fi
+    
+    # Check if gateway user has write access
+    if ! sudo -u gateway test -w "$target"; then
+        echo "ERROR: User 'gateway' does not have write access to $target. Please verify host ACLs."
+        exit 1
+    fi
+    
+    # Check if aria2 user has write access
+    if ! sudo -u aria2 test -w "$target"; then
+        echo "ERROR: User 'aria2' does not have write access to $target. Please verify host ACLs."
+        exit 1
+    fi
+    echo "[OK] Access verified for: $target"
+done
 
 # Add gateway user to aria2 group (so it can read download files)
 usermod -aG aria2 gateway
