@@ -25,24 +25,27 @@ export default function AppLayout() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#0b0f19]">
-        <div className="w-12 h-12 border-4 border-[#4f46e5] border-t-transparent rounded-full animate-spin" />
-        <p className="mt-4 text-slate-400 text-sm font-medium">Authorising session...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen" style={{ background: 'oklch(0.08 0.018 255)' }}>
+        <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'oklch(0.58 0.24 270)', borderTopColor: 'transparent' }} />
+        <p className="mt-4 text-sm font-medium" style={{ color: 'oklch(0.50 0.04 255)' }}>Authorising session…</p>
       </div>
     )
   }
 
   if (isError || !user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#0b0f19] text-center px-4">
-        <h3 className="text-xl font-bold text-white mb-2">Session Expired</h3>
-        <p className="text-slate-400 text-sm mb-6">Your authentication token is invalid or has expired.</p>
+      <div className="flex flex-col items-center justify-center min-h-screen text-center px-4" style={{ background: 'oklch(0.08 0.018 255)' }}>
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'oklch(0.58 0.22 22 / 0.12)', border: '1px solid oklch(0.58 0.22 22 / 0.30)' }}>
+          <span className="text-2xl">🔐</span>
+        </div>
+        <h3 className="text-xl font-bold mb-2" style={{ color: 'oklch(0.93 0.010 255)' }}>Session Expired</h3>
+        <p className="text-sm mb-6" style={{ color: 'oklch(0.50 0.04 255)' }}>Your authentication token is invalid or has expired.</p>
         <button
           onClick={() => {
             localStorage.removeItem('token')
             window.location.href = ROUTES.LOGIN
           }}
-          className="px-6 py-2.5 rounded-xl bg-[#4f46e5] hover:bg-[#4338ca] text-white text-sm font-medium transition-colors"
+          className="btn-brand px-6 py-2.5 rounded-xl text-sm font-semibold cursor-pointer"
         >
           Return to Login
         </button>
@@ -51,7 +54,7 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-[#0b0f19] overflow-hidden">
+    <div className="flex h-screen overflow-hidden" style={{ background: 'oklch(0.08 0.018 255)' }}>
       {/* Sidebar for Desktop */}
       <Sidebar className="hidden md:flex flex-shrink-0" />
 
@@ -65,7 +68,7 @@ export default function AppLayout() {
       {/* Main Content Pane */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <Header onMenuToggle={() => setMobileSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto bg-[#0b0f19] p-6 text-slate-100">
+        <main className="flex-1 overflow-y-auto p-6" style={{ background: 'transparent' }}>
           <div className="max-w-7xl mx-auto space-y-6">
             <Outlet />
           </div>

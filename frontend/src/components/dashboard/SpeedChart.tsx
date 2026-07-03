@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Activity } from 'lucide-react'
 import {
   AreaChart,
@@ -19,6 +19,9 @@ interface ChartDataPoint {
   upload: number
 }
 
+const DOWNLOAD_COLOR = 'oklch(0.70 0.17 155)' // emerald
+const UPLOAD_COLOR   = 'oklch(0.68 0.20 270)'  // indigo
+
 export default function SpeedChart() {
   const { data: stats } = useDownloadStats()
   const [dataPoints, setDataPoints] = useState<ChartDataPoint[]>([])
@@ -27,106 +30,149 @@ export default function SpeedChart() {
     if (!stats) return
 
     const now = new Date()
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    const timeStr = now.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
 
     setDataPoints((prev) => {
       const next = [
         ...prev,
-        {
-          time: timeStr,
-          download: stats.download_speed,
-          upload: stats.upload_speed,
-        },
+        { time: timeStr, download: stats.download_speed, upload: stats.upload_speed },
       ]
-      // Maintain maximum of 20 points
-      if (next.length > 20) {
-        return next.slice(next.length - 20)
-      }
-      return next
+      return next.length > 30 ? next.slice(next.length - 30) : next
     })
   }, [stats])
 
-  // Custom tooltips formatter to display sizes in B/KB/MB/GB
-  const formatTooltipValue = (value: number) => {
-    return `${formatBytes(value)}/s`
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null
+    return (
+      <div
+        className="px-3 py-2 rounded-xl text-xs"
+        style={{
+          background: 'oklch(0.13 0.020 255 / 0.94)',
+          border: '1px solid oklch(0.28 0.04 260 / 0.55)',
+          backdropFilter: 'blur(20px)',
+          boxShadow: '0 8px 32px oklch(0.04 0.01 255 / 0.65)',
+        }}
+      >
+        <p className="font-bold mb-1.5" style={{ color: 'oklch(0.48 0.04 255)' }}>
+          {label}
+        </p>
+        {payload.map((entry: any) => (
+          <p key={entry.dataKey} className="font-mono font-semibold" style={{ color: entry.stroke }}>
+            {entry.name === 'download' ? '↓' : '↑'} {formatBytes(entry.value)}/s
+          </p>
+        ))}
+      </div>
+    )
   }
 
   return (
-    <Card className="glass border-[#222533] w-full">
+    <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-white font-bold text-base tracking-wide flex items-center gap-2">
-          <Activity className="w-5 h-5 text-indigo-400" />
-          Real-time Network Speed
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <Activity className="w-4 h-4" style={{ color: 'oklch(0.68 0.20 270)' }} />
+          Network Throughput
         </CardTitle>
-        <CardDescription className="text-xs text-slate-500">Live download vs upload throughput</CardDescription>
+        <CardDescription>
+          <span className="flex items-center gap-4 mt-0.5">
+            <span className="flex items-center gap-1.5">
+              <span
+                className="inline-block w-2.5 h-2.5 rounded-sm"
+                style={{ background: DOWNLOAD_COLOR }}
+              />
+              <span>Download</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span
+                className="inline-block w-2.5 h-2.5 rounded-sm"
+                style={{ background: UPLOAD_COLOR }}
+              />
+              <span>Upload</span>
+            </span>
+          </span>
+        </CardDescription>
       </CardHeader>
-      <CardContent className="h-64 pt-4">
-        {dataPoints.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-slate-500 text-xs">
-            Awaiting data streams...
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={dataPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorDownload" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="colorUpload" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
-                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#222533" opacity={0.5} />
-              <XAxis
-                dataKey="time"
-                stroke="#64748b"
-                fontSize={10}
-                tickLine={false}
-                axisLine={false}
-                dy={10}
-              />
-              <YAxis
-                stroke="#64748b"
-                fontSize={10}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(val) => formatBytes(val, 0)}
-              />
-              <Tooltip
-                contentStyle={{
-                  background: 'oklch(0.12 0.02 244)',
-                  borderColor: 'oklch(0.22 0.03 244)',
-                  borderRadius: '12px',
-                  color: '#fff',
-                  fontSize: '11px',
-                }}
-                labelStyle={{ fontWeight: 'bold', color: '#64748b' }}
-                itemStyle={{ padding: '2px 0' }}
-                formatter={(val: any) => [formatTooltipValue(val), '']}
-              />
-              <Area
-                type="monotone"
-                dataKey="download"
-                name="Download"
-                stroke="#10b981"
-                strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#colorDownload)"
-              />
-              <Area
-                type="monotone"
-                dataKey="upload"
-                name="Upload"
-                stroke="#6366f1"
-                strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#colorUpload)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        )}
+
+      <CardContent className="pt-2">
+        <div style={{ height: 220 }}>
+          {dataPoints.length === 0 ? (
+            <div
+              className="flex flex-col items-center justify-center h-full gap-2"
+              style={{ color: 'oklch(0.42 0.04 255)' }}
+            >
+              <Activity className="w-8 h-8 opacity-30 animate-pulse" />
+              <p className="text-xs font-medium">Awaiting data stream…</p>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={dataPoints} margin={{ top: 8, right: 4, left: -24, bottom: 0 }}>
+                <defs>
+                  {/* Download gradient */}
+                  <linearGradient id="gDownload" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor={DOWNLOAD_COLOR} stopOpacity={0.30} />
+                    <stop offset="100%" stopColor={DOWNLOAD_COLOR} stopOpacity={0}    />
+                  </linearGradient>
+                  {/* Upload gradient */}
+                  <linearGradient id="gUpload" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor={UPLOAD_COLOR} stopOpacity={0.25} />
+                    <stop offset="100%" stopColor={UPLOAD_COLOR} stopOpacity={0}    />
+                  </linearGradient>
+                </defs>
+
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="oklch(0.22 0.03 255 / 0.35)"
+                  vertical={false}
+                />
+
+                <XAxis
+                  dataKey="time"
+                  stroke="oklch(0.35 0.04 255)"
+                  fontSize={9}
+                  tickLine={false}
+                  axisLine={false}
+                  dy={8}
+                  interval="preserveStartEnd"
+                  tick={{ fill: 'oklch(0.38 0.04 255)', fontFamily: 'JetBrains Mono, monospace' }}
+                />
+                <YAxis
+                  stroke="oklch(0.35 0.04 255)"
+                  fontSize={9}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v) => formatBytes(v, 0)}
+                  tick={{ fill: 'oklch(0.38 0.04 255)', fontFamily: 'JetBrains Mono, monospace' }}
+                />
+
+                <Tooltip content={<CustomTooltip />} />
+
+                <Area
+                  type="monotone"
+                  dataKey="download"
+                  name="download"
+                  stroke={DOWNLOAD_COLOR}
+                  strokeWidth={2}
+                  fill="url(#gDownload)"
+                  dot={false}
+                  activeDot={{ r: 4, fill: DOWNLOAD_COLOR, strokeWidth: 0 }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="upload"
+                  name="upload"
+                  stroke={UPLOAD_COLOR}
+                  strokeWidth={2}
+                  fill="url(#gUpload)"
+                  dot={false}
+                  activeDot={{ r: 4, fill: UPLOAD_COLOR, strokeWidth: 0 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
+        </div>
       </CardContent>
     </Card>
   )
