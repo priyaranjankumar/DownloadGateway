@@ -16,5 +16,5 @@ gateway ALL=(root) NOPASSWD: /usr/sbin/ip6tables *
 gateway ALL=(root) NOPASSWD: /usr/sbin/resolvconf *
 gateway ALL=(root) NOPASSWD: /usr/bin/resolvectl *
 
-# Allow reading WireGuard logs via journalctl
-gateway ALL=(root) NOPASSWD: /usr/bin/journalctl -u wg-quick@* *
+# Allow reading system and service logs via journalctl
+gateway ALL=(root) NOPASSWD: /usr/bin/journalctl *

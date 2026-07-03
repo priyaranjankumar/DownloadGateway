@@ -12,10 +12,9 @@ from app.utils.process import run_command
 
 log = structlog.get_logger(__name__)
 
-# Map logical source names to file paths or journalctl units.
 _LOG_SOURCES: dict[str, dict[str, str]] = {
     "aria2": {"type": "file", "path": "/var/log/aria2/aria2.log"},
-    "backend": {"type": "file", "path": ""},  # filled at runtime
+    "backend": {"type": "journal", "unit": "download-gateway-backend"},
     "wireguard": {"type": "journal", "unit": "wg-quick@wg0"},
     "system": {"type": "journal", "unit": ""},
 }
