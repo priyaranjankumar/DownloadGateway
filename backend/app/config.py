@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     aria2_rpc_secret: str = ""
 
     # WireGuard / VPN
-    wireguard_config_dir: str = "/etc/wireguard"
+    wireguard_config_dir: str = "/etc/wireguard/configs"
     wireguard_interface: str = "wg0"
 
     # Storage

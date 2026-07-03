@@ -34,7 +34,7 @@ class VPNService:
     async def connect(self, server_id: str) -> VPNStatus:
         """Activate the VPN for *server_id*.
 
-        1. Copy the matching config file to ``/etc/wireguard/<interface>.conf``.
+        1. Symlink or copy the matching config file to ``/etc/wireguard/<interface>.conf``.
         2. Bring the interface up via ``wg-quick up``.
         """
         src = self._config_path(server_id)
@@ -44,10 +44,18 @@ class VPNService:
         # Ensure any existing connection is torn down first
         await self._safe_down()
 
-        dst = Path(self._config_dir) / f"{self._interface}.conf"
-        await run_command(
-            "cp", str(src), str(dst), sudo=True,
-        )
+        dst = Path("/etc/wireguard") / f"{self._interface}.conf"
+        try:
+            if dst.exists() or dst.is_symlink():
+                dst.unlink()
+            # Try to symlink first so resolve() works to find the original file name
+            dst.symlink_to(src)
+        except Exception as e:
+            log.warn("vpn_symlink_failed_falling_back_to_copy", src=str(src), dst=str(dst), error=str(e))
+            # Fallback to copy in python if symlinking fails
+            import shutil
+            shutil.copy(str(src), str(dst))
+
         await run_command("wg-quick", "up", self._interface, sudo=True)
         log.info("vpn_connected", server_id=server_id)
         return await self.get_status()
@@ -136,9 +144,9 @@ class VPNService:
         return servers
 
     async def get_current_server(self) -> dict[str, str] | None:
-        """Determine the currently active server from the symlinked config."""
-        conf = Path(self._config_dir) / f"{self._interface}.conf"
-        if not conf.exists():
+        """Determine the currently active server from the active config."""
+        conf = Path("/etc/wireguard") / f"{self._interface}.conf"
+        if not conf.exists() and not conf.is_symlink():
             return None
         # Try to read the actual file and match against known configs
         try:

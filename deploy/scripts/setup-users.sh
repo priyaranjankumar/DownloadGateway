@@ -48,9 +48,10 @@ mkdir -p /opt/download-gateway/data
 chown -R gateway:gateway /opt/download-gateway/data
 chmod 750 /opt/download-gateway/data
 
-# WireGuard config directory (readable by gateway for server listing)
+# WireGuard config directory (readable/writable by gateway for server listing and configuration copying)
 mkdir -p /etc/wireguard/configs
-chmod 750 /etc/wireguard /etc/wireguard/configs
+chown -R root:gateway /etc/wireguard
+chmod 770 /etc/wireguard /etc/wireguard/configs
 
 echo "=== Done ==="
 echo ""
