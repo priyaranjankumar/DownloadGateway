@@ -159,5 +159,4 @@ When the backend is running, visit:
 - **HTTPS ready** — Works behind Nginx/Caddy/Traefik reverse proxy
 
 ## License
-
-Private project.
+MIT
