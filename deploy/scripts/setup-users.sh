@@ -73,6 +73,10 @@ chmod 750 /opt/download-gateway/data
 mkdir -p /etc/wireguard/configs
 chown -R root:gateway /etc/wireguard
 chmod 770 /etc/wireguard /etc/wireguard/configs
+if [ -d /etc/wireguard/configs ]; then
+    find /etc/wireguard/configs -type f -exec chmod 640 {} + 2>/dev/null || true
+    find /etc/wireguard/configs -type f -exec chown root:gateway {} + 2>/dev/null || true
+fi
 
 echo "=== Done ==="
 echo ""

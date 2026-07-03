@@ -21,9 +21,9 @@ Environment=DG_DOWNLOAD_DIR=/downloads
 Environment=DG_LOG_LEVEL=INFO
 
 # Security hardening
-NoNewPrivileges=yes
+NoNewPrivileges=no
 ProtectHome=yes
-ReadWritePaths=/opt/download-gateway/data /downloads /var/log/aria2
+ReadWritePaths=/opt/download-gateway/data /downloads /var/log/aria2 /etc/wireguard
 
 [Install]
 WantedBy=multi-user.target
