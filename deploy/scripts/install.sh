@@ -22,7 +22,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # --- Step 1: System packages ---
-echo "=== [1/8] Installing system packages ==="
+echo "=== [1/9] Installing system packages ==="
 apt update
 apt install -y curl jq
 # Configure NodeSource repository for Node.js v20 (Tailwind v4 requires Node >= 20)
@@ -40,12 +40,12 @@ echo "[OK] System packages installed"
 
 # --- Step 2: Create users and directories ---
 echo ""
-echo "=== [2/8] Setting up users and directories ==="
+echo "=== [2/9] Setting up users and directories ==="
 bash "$SCRIPT_DIR/setup-users.sh"
 
 # --- Step 3: Install aria2 config ---
 echo ""
-echo "=== [3/8] Configuring aria2 ==="
+echo "=== [3/9] Configuring aria2 ==="
 
 # Generate RPC secret
 ARIA2_SECRET=$(openssl rand -hex 16)
@@ -58,7 +58,7 @@ echo "[OK] aria2 configured (RPC secret generated)"
 
 # --- Step 4: Install backend ---
 echo ""
-echo "=== [4/8] Installing backend ==="
+echo "=== [4/9] Installing backend ==="
 
 mkdir -p "$INSTALL_DIR/backend"
 # Clean up any nested backend folder from previous installation runs
@@ -81,7 +81,7 @@ echo "[OK] Backend installed"
 
 # --- Step 5: Build frontend ---
 echo ""
-echo "=== [5/8] Building frontend ==="
+echo "=== [5/9] Building frontend ==="
 
 cd "$PROJECT_DIR/frontend"
 rm -rf node_modules package-lock.json
@@ -98,7 +98,7 @@ echo "[OK] Frontend built"
 
 # --- Step 6: Install systemd services ---
 echo ""
-echo "=== [6/8] Installing systemd services ==="
+echo "=== [6/9] Installing systemd services ==="
 
 # Update backend service with generated secrets
 sed -e "s/GENERATED_ON_INSTALL/$APP_SECRET/" \
@@ -127,7 +127,7 @@ echo "[OK] Systemd services installed"
 
 # --- Step 7: Install sudoers ---
 echo ""
-echo "=== [7/8] Configuring sudo permissions ==="
+echo "=== [7/9] Configuring sudo permissions ==="
 
 cp "$DEPLOY_DIR/sudoers/gateway" /etc/sudoers.d/gateway
 chmod 440 /etc/sudoers.d/gateway
@@ -136,9 +136,58 @@ chmod 440 /etc/sudoers.d/gateway
 visudo -c -f /etc/sudoers.d/gateway
 echo "[OK] Sudo permissions configured"
 
-# --- Step 8: Enable and start services ---
+# --- Step 8: Configure LXC Console and MOTD ---
 echo ""
-echo "=== [8/8] Starting services ==="
+echo "=== [8/9] Configuring LXC Console and MOTD ==="
+
+# 1. Auto-login
+mkdir -p /etc/systemd/system/container-getty@1.service.d
+cat > /etc/systemd/system/container-getty@1.service.d/override.conf << 'EOF'
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin root --noclear --keep-baud tty%I 115200,38400,9600 $TERM
+EOF
+systemctl daemon-reload
+systemctl restart container-getty@1.service || true
+
+# 2. Colors for root
+if ! grep -q "export TERM='xterm-256color'" /root/.bashrc; then
+    echo "export TERM='xterm-256color'" >> /root/.bashrc
+fi
+
+# 3. Custom MOTD
+cat > /etc/profile.d/00_custom-motd.sh << 'EOF'
+#!/bin/bash
+# Dynamically print styled greeting
+
+# Colors
+BOLD='\e[1m'
+YELLOW='\e[1;33m'
+GREEN='\e[1;32m'
+CYAN='\e[1;36m'
+RESET='\e[0m'
+
+# Gather info
+OS_NAME=$(grep '^PRETTY_NAME=' /etc/os-release | cut -d= -f2 | tr -d '"')
+HOST=$(hostname)
+IP_ADDR=$(hostname -I | awk '{print $1}')
+
+echo -e "\n${BOLD}${YELLOW}[${HOST}]${RESET}${BOLD} LXC Container${RESET}"
+echo -e "    🌐   ${CYAN}Provided by:${RESET} DownloadGateway"
+echo -e "    🖥️   ${CYAN}OS:${RESET} ${OS_NAME}"
+echo -e "    🏠   ${CYAN}Hostname:${RESET} ${HOST}"
+echo -e "    💡   ${CYAN}IP Address:${RESET} ${GREEN}${IP_ADDR}${RESET}\n"
+EOF
+chmod +x /etc/profile.d/00_custom-motd.sh
+
+# 4. Disable Defaults
+chmod -x /etc/update-motd.d/* 2>/dev/null || true
+
+echo "[OK] Console and MOTD configured"
+
+# --- Step 9: Enable and start services ---
+echo ""
+echo "=== [9/9] Starting services ==="
 
 systemctl enable aria2.service
 systemctl enable download-gateway-backend.service
