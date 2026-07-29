@@ -145,6 +145,10 @@ class Aria2Client:
     async def force_remove(self, gid: str) -> str:
         return await self._call("aria2.forceRemove", [gid])
 
+    async def remove_download_result(self, gid: str) -> str:
+        """Remove a completed/error/removed entry from aria2's stopped list."""
+        return await self._call("aria2.removeDownloadResult", [gid])
+
     async def pause(self, gid: str) -> str:
         return await self._call("aria2.pause", [gid])
 

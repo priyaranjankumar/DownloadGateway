@@ -172,10 +172,16 @@ async def remove_download(
         if d["status"] in ("active", "waiting", "paused"):
             await client.remove(gid)
         else:
-            await client.force_remove(gid)
+            # completed/error/removed — clear from aria2's stopped list
+            await client.remove_download_result(gid)
         return {"status": "removed", "gid": gid}
     except Exception:
-        # Fallback to force remove
+        # Fallback: try both removal methods
+        try:
+            await client.remove_download_result(gid)
+            return {"status": "removed", "gid": gid}
+        except Exception:
+            pass
         try:
             await client.force_remove(gid)
             return {"status": "removed", "gid": gid}
