@@ -38,11 +38,10 @@ class AuthService:
     # -- JWT -----------------------------------------------------------------
 
     @staticmethod
-    def create_token(username: str) -> str:
+    def create_token(username: str, expire_minutes: int | None = None) -> str:
         """Generate a signed JWT containing a ``sub`` claim."""
-        expire = datetime.now(timezone.utc) + timedelta(
-            minutes=settings.jwt_expire_minutes
-        )
+        minutes = expire_minutes if expire_minutes is not None else settings.jwt_expire_minutes
+        expire = datetime.now(timezone.utc) + timedelta(minutes=minutes)
         payload: dict[str, Any] = {
             "sub": username,
             "exp": expire,

@@ -59,7 +59,7 @@ async def connect_vpn(
     try:
         status_obj = await vpn_service.connect(req.server_id)
         # Trigger an immediate check of IP
-        await checker._fetch_ip()
+        await checker.refresh()
         return await get_vpn_status(request, username=username, checker=checker)
     except FileNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
@@ -76,7 +76,7 @@ async def disconnect_vpn(
     try:
         status_obj = await vpn_service.disconnect()
         # Trigger an immediate check of IP
-        await checker._fetch_ip()
+        await checker.refresh()
         return await get_vpn_status(request, username=username, checker=checker)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
@@ -91,7 +91,7 @@ async def reconnect_vpn(
     """Cycle the VPN connection or switch to a new server."""
     try:
         status_obj = await vpn_service.reconnect(server_id)
-        await checker._fetch_ip()
+        await checker.refresh()
         return await get_vpn_status(request, username=username, checker=checker)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
@@ -110,7 +110,7 @@ async def get_public_ip(
     ip_info = checker.get_current_ip()
     if not ip_info:
         # Fallback fetch
-        info = await checker._fetch_ip()
+        info = await checker.refresh()
         if not info:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -118,6 +118,20 @@ async def get_public_ip(
             )
         return info
     return ip_info
+
+@router.post("/ip/refresh", response_model=IPInfo)
+async def refresh_public_ip(
+    username: str = Depends(get_current_user),
+    checker: IPCheckerService = Depends(get_ip_checker),
+) -> IPInfo:
+    """Force-refresh the public IP (manual user action)."""
+    info = await checker.refresh()
+    if not info:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Unable to fetch public IP",
+        )
+    return info
 
 @router.get("/killswitch", response_model=KillSwitchStatus)
 async def get_killswitch_status(username: str = Depends(get_current_user)) -> KillSwitchStatus:

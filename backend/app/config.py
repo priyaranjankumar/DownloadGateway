@@ -33,10 +33,6 @@ class Settings(BaseSettings):
     download_dir: str = "/downloads"
     database_path: str = "./data/gateway.db"
 
-    # IP-leak detection
-    ip_check_interval: int = 30
-    ip_check_url: str = "https://api.ipify.org?format=json"
-
     # Auth
     jwt_expire_minutes: int = 1440
 

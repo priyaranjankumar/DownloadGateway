@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Plus, Link as LinkIcon, FileUp, Sparkles } from 'lucide-react'
+import { Plus, Link as LinkIcon, FileUp, Sparkles, Clock } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAddDownload } from '@/hooks/use-downloads'
+import { useCreateSchedule } from '@/hooks/use-schedules'
 import { toast } from 'sonner'
 
 export default function AddDownloadDialog() {
@@ -22,9 +23,12 @@ export default function AddDownloadDialog() {
   const [torrentB64, setTorrentB64] = useState('')
   const [torrentName, setTorrentName] = useState('')
   const [downloadDir, setDownloadDir] = useState('')
+  const [scheduleEnabled, setScheduleEnabled] = useState(false)
+  const [scheduleAt, setScheduleAt] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   const addDownloadMutation = useAddDownload()
+  const createScheduleMutation = useCreateSchedule()
 
   // Convert uploaded torrent file to base64
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,45 +55,75 @@ export default function AddDownloadDialog() {
     }
 
     try {
-      if (activeTab === 'uris') {
-        const uris = urisInput
-          .split('\n')
-          .map((u) => u.trim())
-          .filter((u) => u.length > 0)
+      if (scheduleEnabled && scheduleAt) {
+        const utcDate = new Date(scheduleAt).toISOString()
+        const payload: any = { schedule_at: utcDate }
+        if (Object.keys(options).length > 0) payload.options = options
         
-        if (uris.length === 0) {
-          toast.error('Please enter at least one URL')
-          return
+        if (activeTab === 'uris') {
+          const uris = urisInput.split('\n').map((u) => u.trim()).filter((u) => u.length > 0)
+          if (uris.length === 0) {
+            toast.error('Please enter at least one URL')
+            return
+          }
+          payload.uris = uris
+        } else {
+          if (!torrentB64) {
+            toast.error('Please upload a torrent file')
+            return
+          }
+          payload.torrent = torrentB64
         }
-
+        
         await toast.promise(
-          addDownloadMutation.mutateAsync({
-            uris,
-            options,
-          }),
+          createScheduleMutation.mutateAsync(payload),
           {
-            loading: 'Submitting task to aria2...',
-            success: 'Task added successfully!',
-            error: (err) => `Failed to add task: ${err.message}`,
+            loading: 'Scheduling download...',
+            success: `Download scheduled for ${new Date(scheduleAt).toLocaleString()}`,
+            error: (err) => `Failed to schedule: ${err.message}`,
           }
         )
       } else {
-        if (!torrentB64) {
-          toast.error('Please upload a torrent file')
-          return
-        }
-
-        await toast.promise(
-          addDownloadMutation.mutateAsync({
-            torrent: torrentB64,
-            options,
-          }),
-          {
-            loading: 'Uploading torrent metadata to aria2...',
-            success: 'Torrent download initialized!',
-            error: (err) => `Failed to start torrent: ${err.message}`,
+        if (activeTab === 'uris') {
+          const uris = urisInput
+            .split('\n')
+            .map((u) => u.trim())
+            .filter((u) => u.length > 0)
+          
+          if (uris.length === 0) {
+            toast.error('Please enter at least one URL')
+            return
           }
-        )
+
+          await toast.promise(
+            addDownloadMutation.mutateAsync({
+              uris,
+              options,
+            }),
+            {
+              loading: 'Submitting task to aria2...',
+              success: 'Task added successfully!',
+              error: (err) => `Failed to add task: ${err.message}`,
+            }
+          )
+        } else {
+          if (!torrentB64) {
+            toast.error('Please upload a torrent file')
+            return
+          }
+
+          await toast.promise(
+            addDownloadMutation.mutateAsync({
+              torrent: torrentB64,
+              options,
+            }),
+            {
+              loading: 'Uploading torrent metadata to aria2...',
+              success: 'Torrent download initialized!',
+              error: (err) => `Failed to start torrent: ${err.message}`,
+            }
+          )
+        }
       }
 
       // Reset form states
@@ -97,6 +131,8 @@ export default function AddDownloadDialog() {
       setTorrentB64('')
       setTorrentName('')
       setDownloadDir('')
+      setScheduleEnabled(false)
+      setScheduleAt('')
       if (fileInputRef.current) fileInputRef.current.value = ''
       setOpen(false)
     } catch (err) {
@@ -187,6 +223,33 @@ export default function AddDownloadDialog() {
                 className="bg-[#111625]/60 border-[#222533] text-slate-200 rounded-xl focus:ring-[#4f46e5] w-full py-4 text-xs"
               />
             </div>
+
+            {/* Schedule Toggle */}
+            <div className="space-y-2 border-t border-[#222533]/40 pt-4">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" />
+                  Schedule for Later
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setScheduleEnabled(!scheduleEnabled)}
+                  className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${scheduleEnabled ? 'bg-[#4f46e5]' : 'bg-[#222533]'}`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform duration-200 ${scheduleEnabled ? 'translate-x-5' : ''}`} />
+                </button>
+              </div>
+              {scheduleEnabled && (
+                <input
+                  type="datetime-local"
+                  value={scheduleAt}
+                  onChange={(e) => setScheduleAt(e.target.value)}
+                  min={new Date().toISOString().slice(0, 16)}
+                  className="w-full bg-[#111625]/60 border border-[#222533] rounded-xl p-3 text-slate-200 text-xs focus:ring-1 focus:ring-[#4f46e5] focus:outline-none"
+                  required={scheduleEnabled}
+                />
+              )}
+            </div>
           </Tabs>
 
           <DialogFooter className="gap-2 sm:gap-0">
@@ -201,9 +264,11 @@ export default function AddDownloadDialog() {
             <Button
               type="submit"
               className="bg-[#4f46e5] hover:bg-[#4338ca] text-white font-semibold text-xs rounded-xl py-5 px-5 shadow-lg shadow-indigo-950/20 hover:shadow-indigo-950/40 cursor-pointer"
-              disabled={addDownloadMutation.isPending}
+              disabled={addDownloadMutation.isPending || createScheduleMutation.isPending}
             >
-              {addDownloadMutation.isPending ? 'Adding task...' : 'Start Download'}
+              {addDownloadMutation.isPending || createScheduleMutation.isPending
+                ? (scheduleEnabled ? 'Scheduling...' : 'Adding task...')
+                : (scheduleEnabled ? 'Schedule Download' : 'Start Download')}
             </Button>
           </DialogFooter>
         </form>

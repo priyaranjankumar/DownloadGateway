@@ -81,3 +81,11 @@ async def change_password(
             detail="Incorrect current password",
         )
     return {"detail": "Password updated successfully"}
+
+@router.post("/api-token")
+async def generate_api_token(
+    username: str = Depends(get_current_user),
+) -> dict:
+    """Generate a long-lived API token for the browser extension."""
+    token = AuthService.create_token(username, expire_minutes=43200)  # 30 days
+    return {"token": token, "expires_in_days": 30}

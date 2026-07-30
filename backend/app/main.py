@@ -18,6 +18,8 @@ from app.database import init_db, execute_query, fetch_all
 from app.utils.logging import setup_logging
 from app.services.aria2 import Aria2Client, Aria2EventListener
 from app.services.ip_checker import IPCheckerService
+from app.services.scheduler import SchedulerService
+from app.services.bandwidth_scheduler import BandwidthScheduler
 from app.schemas.vpn import IPInfo
 
 # Setup loggers
@@ -34,6 +36,7 @@ from app.routers import (
     logs,
     settings as settings_router,
     websocket,
+    schedules,
 )
 
 # WebSocket manager
@@ -48,8 +51,19 @@ async def on_aria2_event(event_type: str, event_data: dict[str, Any]) -> None:
     ws_type = f"download:{event_type.replace('onDownload', '').lower()}"
     if event_type == "onBtDownloadComplete":
         ws_type = "download:bt_completed"
-        
-    await manager.broadcast(ws_type, {"gid": gid})
+
+    # Enrich event with download name for browser notifications
+    enriched: dict[str, Any] = {"gid": gid}
+    if event_type in ("onDownloadComplete", "onDownloadError"):
+        try:
+            from app.main import app_instance
+            client: Aria2Client = app_instance.state.aria2
+            quick_status = await client.tell_status(gid)
+            enriched["name"] = quick_status.get("name")
+        except Exception:
+            pass
+
+    await manager.broadcast(ws_type, enriched)
     
     # Enrich and save download to history if it has finished
     if event_type in ("onDownloadComplete", "onDownloadError", "onDownloadStop"):
@@ -111,13 +125,23 @@ async def lifespan(app: FastAPI):
     listener.start()
     app.state.aria2_listener = listener
     
-    # 3. Setup IP checking service
+    # 3. Setup IP checking service (on-demand, no polling)
     ip_checker = IPCheckerService()
     ip_checker.register(on_ip_changed)
-    ip_checker.start()
+    await ip_checker.refresh()  # Single fetch on startup
     app.state.ip_checker = ip_checker
     
-    # 4. Check auto-connect settings on startup
+    # 4. Start download scheduler
+    scheduler = SchedulerService(aria2)
+    scheduler.start()
+    app.state.scheduler = scheduler
+    
+    # 5. Start bandwidth scheduler
+    bw_scheduler = BandwidthScheduler(aria2)
+    bw_scheduler.start()
+    app.state.bw_scheduler = bw_scheduler
+    
+    # 6. Check auto-connect settings on startup
     try:
         rows = await fetch_all("SELECT key, value FROM settings")
         settings_dict = {row["key"]: row["value"] for row in rows} if rows else {}
@@ -157,7 +181,9 @@ async def lifespan(app: FastAPI):
     log.info("application_shutdown_cleanup")
     
     # Stop background services
-    await ip_checker.stop()
+    await bw_scheduler.stop()
+    await scheduler.stop()
+    await ip_checker.close()
     await listener.stop()
     await aria2.close()
 
@@ -195,6 +221,7 @@ def create_app() -> FastAPI:
     app.include_router(files.router, prefix="/api")
     app.include_router(logs.router, prefix="/api")
     app.include_router(settings_router.router, prefix="/api")
+    app.include_router(schedules.router, prefix="/api")
     
     # Mount WebSocket router
     app.include_router(websocket.router)

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, Navigate } from 'react-router'
 import Sidebar from './Sidebar'
 import Header from './Header'
@@ -6,6 +6,7 @@ import { useCurrentUser } from '@/hooks/use-auth'
 import { useWebSocket } from '@/hooks/use-websocket'
 import { ROUTES } from '@/lib/constants'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
+import { requestNotificationPermission } from '@/lib/notifications'
 
 export default function AppLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
@@ -22,6 +23,11 @@ export default function AppLayout() {
 
   // Start the background WebSocket connection
   useWebSocket()
+
+  // Request browser notification permission on first authenticated load
+  useEffect(() => {
+    requestNotificationPermission()
+  }, [])
 
   if (isLoading) {
     return (

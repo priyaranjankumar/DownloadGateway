@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Download Gateway</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <h1>Download Gateway</h1>
+    <div id="statusIndicator" class="status-disconnected" title="Checking connection..."></div>
+  </header>
+
+  <main>
+    <div class="input-group">
+      <label for="urlInput">URL(s) to download:</label>
+      <textarea id="urlInput" placeholder="https://example.com/file.zip" rows="3"></textarea>
+    </div>
+
+    <div class="input-group">
+      <label for="dirInput">Download Directory (Optional):</label>
+      <input type="text" id="dirInput" placeholder="movies/2026">
+    </div>
+
+    <button id="downloadBtn">Download Now</button>
+    <div id="messageArea"></div>
+  </main>
+  
+  <footer>
+    <a href="#" id="optionsLink">Settings</a>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>

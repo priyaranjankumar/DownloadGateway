@@ -24,3 +24,9 @@ class AppSettings(BaseModel):
     notification_download_complete: bool | None = None
     notification_download_error: bool | None = None
     notification_vpn_disconnect: bool | None = None
+
+    # Bandwidth scheduling
+    bw_day_start: str | None = None                 # "HH:MM" e.g. "08:00"
+    bw_day_end: str | None = None                   # "HH:MM" e.g. "00:00"
+    bw_day_limit: int | None = None                 # bytes/sec, 0 = unlimited
+    bw_night_limit: int | None = None               # bytes/sec, 0 = unlimited

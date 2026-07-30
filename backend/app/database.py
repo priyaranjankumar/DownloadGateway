@@ -66,6 +66,18 @@ async def init_db() -> None:
                 key   TEXT PRIMARY KEY,
                 value TEXT
             );
+
+            CREATE TABLE IF NOT EXISTS scheduled_downloads (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                uris            TEXT    NOT NULL,
+                torrent_b64     TEXT,
+                options         TEXT,
+                schedule_at     TEXT    NOT NULL,
+                status          TEXT    NOT NULL DEFAULT 'pending',
+                created_at      TEXT    NOT NULL DEFAULT (datetime('now')),
+                dispatched_at   TEXT,
+                error_message   TEXT
+            );
             """
         )
         await db.commit()

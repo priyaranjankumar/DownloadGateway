@@ -12,4 +12,8 @@ export interface AppSettings {
   notification_download_complete?: boolean | null
   notification_download_error?: boolean | null
   notification_vpn_disconnect?: boolean | null
+  bw_day_start?: string | null
+  bw_day_end?: string | null
+  bw_day_limit?: number | null
+  bw_night_limit?: number | null
 }

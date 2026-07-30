@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { QUERY_KEYS, WS_EVENTS } from '@/lib/constants'
 import { WSEvent } from '@/types/websocket'
+import { sendNotification } from '@/lib/notifications'
 
 export function useWebSocket() {
   const queryClient = useQueryClient()
@@ -41,7 +42,11 @@ export function useWebSocket() {
             queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOWNLOADS })
             queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOWNLOAD_STATS })
             queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOWNLOAD_HISTORY })
-            toast.success(`Download completed: ${data.gid}`)
+            toast.success(`Download completed: ${data.name || data.gid}`)
+            // Browser notification — only when tab is hidden to avoid double-notifying
+            if (document.hidden) {
+              sendNotification('Download Complete ✅', data.name || data.gid)
+            }
             break
 
           case WS_EVENTS.DOWNLOAD_PAUSED:
@@ -52,7 +57,9 @@ export function useWebSocket() {
           case WS_EVENTS.DOWNLOAD_ERROR:
             queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOWNLOADS })
             queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOWNLOAD_STATS })
-            toast.error(`Download failed: ${data.gid}`)
+            toast.error(`Download failed: ${data.name || data.gid}`)
+            // Always fire — download failures are critical
+            sendNotification('Download Failed ❌', data.name || data.gid)
             break
 
           case WS_EVENTS.VPN_CONNECTED:
@@ -65,6 +72,8 @@ export function useWebSocket() {
             queryClient.invalidateQueries({ queryKey: QUERY_KEYS.VPN_STATUS })
             queryClient.invalidateQueries({ queryKey: QUERY_KEYS.VPN_IP })
             toast.warning('VPN Disconnected')
+            // Always fire — security-critical alert
+            sendNotification('⚠️ VPN Disconnected', 'Your traffic is no longer protected')
             break
 
           case WS_EVENTS.IP_CHANGED:

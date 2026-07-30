@@ -1,10 +1,11 @@
 import { Globe, RefreshCw, Compass } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { useCurrentIP } from '@/hooks/use-vpn'
+import { useCurrentIP, useRefreshIP } from '@/hooks/use-vpn'
 
 export default function IPInfo() {
-  const { data: ipInfo, isLoading, refetch, isRefetching } = useCurrentIP()
+  const { data: ipInfo, isLoading } = useCurrentIP()
+  const refreshMutation = useRefreshIP()
 
   return (
     <Card className="glass border-[#222533] flex flex-col h-full">
@@ -20,10 +21,10 @@ export default function IPInfo() {
           variant="ghost"
           size="icon"
           className="w-8 h-8 rounded-lg hover:bg-[#1a1f2e] text-slate-500 hover:text-white cursor-pointer"
-          onClick={() => refetch()}
-          disabled={isLoading || isRefetching}
+          onClick={() => refreshMutation.mutate()}
+          disabled={isLoading || refreshMutation.isPending}
         >
-          <RefreshCw className={`w-4 h-4 ${isRefetching ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${refreshMutation.isPending ? 'animate-spin' : ''}`} />
         </Button>
       </CardHeader>
       <CardContent className="space-y-4 flex-1 flex flex-col justify-center min-h-[180px]">

@@ -20,6 +20,7 @@ export const QUERY_KEYS = {
   SYSTEM_STATS: ['system', 'stats'],
   FILES: ['files', 'list'],
   LOGS: ['logs', 'tail'],
+  SCHEDULED_DOWNLOADS: ['schedules', 'list'],
 }
 
 export const WS_EVENTS = {

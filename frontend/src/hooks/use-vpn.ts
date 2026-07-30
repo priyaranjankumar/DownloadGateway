@@ -59,7 +59,22 @@ export function useCurrentIP() {
       const { data } = await api.get<IPInfo>('/vpn/ip')
       return data
     },
-    refetchInterval: 15000,
+    refetchInterval: false,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  })
+}
+
+export function useRefreshIP() {
+  const queryClient = useQueryClient()
+  return useMutation<IPInfo, Error, void>({
+    mutationFn: async () => {
+      const { data } = await api.post<IPInfo>('/vpn/ip/refresh')
+      return data
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(QUERY_KEYS.VPN_IP, data)
+    },
   })
 }
 
