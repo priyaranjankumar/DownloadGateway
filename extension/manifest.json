@@ -1,9 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Download Gateway",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Send links to your Download Gateway server with one click",
-  "permissions": ["activeTab", "contextMenus", "storage"],
+  "permissions": [
+    "activeTab",
+    "contextMenus",
+    "storage",
+    "clipboardRead",
+    "scripting"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
