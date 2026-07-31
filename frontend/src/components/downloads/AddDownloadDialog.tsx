@@ -224,7 +224,7 @@ export default function AddDownloadDialog() {
                   Loading folders…
                 </div>
               ) : (
-                <Select value={downloadDir || '__default__'} onValueChange={(v) => setDownloadDir(v === '__default__' ? '' : v)}>
+                <Select value={downloadDir || '__default__'} onValueChange={(v) => setDownloadDir(!v || v === '__default__' ? '' : v)}>
                   <SelectTrigger className="w-full bg-[#111625]/60 border-[#222533] text-slate-200 rounded-xl py-5 text-xs hover:bg-[#111625] cursor-pointer">
                     <FolderOpen className="w-4 h-4 text-slate-500 shrink-0" />
                     <SelectValue placeholder="Default (/downloads)" />
