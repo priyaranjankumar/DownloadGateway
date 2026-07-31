@@ -24,6 +24,7 @@ export function useRenameFile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FILES })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FOLDER_LIST })
     },
   })
 }
@@ -39,6 +40,7 @@ export function useDeleteFile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FILES })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FOLDER_LIST })
     },
   })
 }
@@ -52,6 +54,7 @@ export function useMoveFile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FILES })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FOLDER_LIST })
     },
   })
 }
@@ -65,6 +68,19 @@ export function useCreateDir() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FILES })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FOLDER_LIST })
     },
   })
 }
+
+export function useFolderList() {
+  return useQuery<string[]>({
+    queryKey: QUERY_KEYS.FOLDER_LIST,
+    queryFn: async () => {
+      const { data } = await api.get<string[]>('/files/dirs')
+      return data
+    },
+    staleTime: 30_000, // folders change infrequently
+  })
+}
+

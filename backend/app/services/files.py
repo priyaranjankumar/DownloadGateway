@@ -56,6 +56,22 @@ class FileService:
             )
         return entries
 
+    def list_dirs_recursive(self, rel_path: str = "") -> list[str]:
+        """Return a flat sorted list of all sub-directory paths under *rel_path*."""
+        target = self._resolve_path(rel_path)
+        if not target.is_dir():
+            raise FileNotFoundError(f"Not a directory: {rel_path}")
+
+        dirs: list[str] = []
+        for root, subdirs, _ in os.walk(target):
+            # Skip hidden directories
+            subdirs[:] = sorted(d for d in subdirs if not d.startswith("."))
+            root_path = Path(root)
+            if root_path == self._root:
+                continue
+            dirs.append(str(root_path.relative_to(self._root)))
+        return sorted(dirs)
+
     def rename(self, rel_path: str, new_name: str) -> FileEntry:
         """Rename a file or directory (same parent)."""
         source = self._resolve_path(rel_path)

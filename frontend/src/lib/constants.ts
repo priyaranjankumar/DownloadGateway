@@ -19,6 +19,7 @@ export const QUERY_KEYS = {
   DOWNLOAD_HISTORY: ['downloads', 'history'],
   SYSTEM_STATS: ['system', 'stats'],
   FILES: ['files', 'list'],
+  FOLDER_LIST: ['files', 'dirs'],
   LOGS: ['logs', 'tail'],
   SCHEDULED_DOWNLOADS: ['schedules', 'list'],
 }

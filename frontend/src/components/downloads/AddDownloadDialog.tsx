@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
-import { Plus, Link as LinkIcon, FileUp, Sparkles, Clock } from 'lucide-react'
+import { useFolderList } from '@/hooks/use-files'
+import { Plus, Link as LinkIcon, FileUp, Sparkles, Clock, FolderOpen, ChevronDown, Loader2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -10,7 +11,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAddDownload } from '@/hooks/use-downloads'
 import { useCreateSchedule } from '@/hooks/use-schedules'
@@ -29,6 +29,7 @@ export default function AddDownloadDialog() {
   
   const addDownloadMutation = useAddDownload()
   const createScheduleMutation = useCreateSchedule()
+  const { data: folders = [], isLoading: foldersLoading } = useFolderList()
 
   // Convert uploaded torrent file to base64
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -211,17 +212,37 @@ export default function AddDownloadDialog() {
               </div>
             </TabsContent>
 
-            {/* Custom Options */}
+            {/* Download Location */}
             <div className="space-y-1.5 border-t border-[#222533]/40 pt-4">
               <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-                Custom Output Directory (Optional)
+                Download To (Optional)
               </label>
-              <Input
-                placeholder="e.g. /downloads/complete/movies"
-                value={downloadDir}
-                onChange={(e) => setDownloadDir(e.target.value)}
-                className="bg-[#111625]/60 border-[#222533] text-slate-200 rounded-xl focus:ring-[#4f46e5] w-full py-4 text-xs"
-              />
+              <div className="relative">
+                <FolderOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none z-10" />
+                {foldersLoading ? (
+                  <div className="flex items-center gap-2 bg-[#111625]/60 border border-[#222533] rounded-xl p-3 text-xs text-slate-500">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading folders…
+                  </div>
+                ) : (
+                  <>
+                    <select
+                      value={downloadDir}
+                      onChange={(e) => setDownloadDir(e.target.value)}
+                      className="w-full appearance-none bg-[#111625]/60 border border-[#222533] text-slate-200 rounded-xl pl-9 pr-9 py-3 text-xs focus:ring-1 focus:ring-[#4f46e5] focus:outline-none cursor-pointer"
+                      style={{ colorScheme: 'dark' }}
+                    >
+                      <option value="">Default (/downloads)</option>
+                      {folders.map((folder) => (
+                        <option key={folder} value={`/downloads/${folder}`}>
+                          /{folder}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Schedule Toggle */}
