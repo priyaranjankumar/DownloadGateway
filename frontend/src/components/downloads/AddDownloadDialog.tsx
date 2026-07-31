@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useFolderList } from '@/hooks/use-files'
-import { Plus, Link as LinkIcon, FileUp, Sparkles, Clock, FolderOpen, ChevronDown, Loader2 } from 'lucide-react'
+import { Plus, Link as LinkIcon, FileUp, Sparkles, Clock, FolderOpen, Loader2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAddDownload } from '@/hooks/use-downloads'
 import { useCreateSchedule } from '@/hooks/use-schedules'
@@ -217,32 +218,33 @@ export default function AddDownloadDialog() {
               <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
                 Download To (Optional)
               </label>
-              <div className="relative">
-                <FolderOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none z-10" />
-                {foldersLoading ? (
-                  <div className="flex items-center gap-2 bg-[#111625]/60 border border-[#222533] rounded-xl p-3 text-xs text-slate-500">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Loading folders…
-                  </div>
-                ) : (
-                  <>
-                    <select
-                      value={downloadDir}
-                      onChange={(e) => setDownloadDir(e.target.value)}
-                      className="w-full appearance-none bg-[#111625]/60 border border-[#222533] text-slate-200 rounded-xl pl-9 pr-9 py-3 text-xs focus:ring-1 focus:ring-[#4f46e5] focus:outline-none cursor-pointer"
-                      style={{ colorScheme: 'dark' }}
-                    >
-                      <option value="">Default (/downloads)</option>
-                      {folders.map((folder) => (
-                        <option key={folder} value={`/downloads/${folder}`}>
-                          /{folder}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
-                  </>
-                )}
-              </div>
+              {foldersLoading ? (
+                <div className="flex items-center gap-2 bg-[#111625]/60 border border-[#222533] rounded-xl p-3 text-xs text-slate-500">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading folders…
+                </div>
+              ) : (
+                <Select value={downloadDir || '__default__'} onValueChange={(v) => setDownloadDir(v === '__default__' ? '' : v)}>
+                  <SelectTrigger className="w-full bg-[#111625]/60 border-[#222533] text-slate-200 rounded-xl py-5 text-xs hover:bg-[#111625] cursor-pointer">
+                    <FolderOpen className="w-4 h-4 text-slate-500 shrink-0" />
+                    <SelectValue placeholder="Default (/downloads)" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0f1320] border-[#222533] text-slate-200 rounded-xl">
+                    <SelectItem value="__default__" className="text-xs rounded-lg focus:bg-[#4f46e5]/20 focus:text-white cursor-pointer">
+                      Default (/downloads)
+                    </SelectItem>
+                    {folders.map((folder) => (
+                      <SelectItem
+                        key={folder}
+                        value={`/downloads/${folder}`}
+                        className="text-xs rounded-lg focus:bg-[#4f46e5]/20 focus:text-white cursor-pointer"
+                      >
+                        /{folder}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             {/* Schedule Toggle */}
