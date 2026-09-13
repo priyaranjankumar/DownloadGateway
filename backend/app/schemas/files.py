@@ -34,3 +34,8 @@ class CreateDirRequest(BaseModel):
     """Create a new directory inside the sandbox."""
 
     path: str
+
+
+class DirGroup(BaseModel):
+    root: str
+    dirs: list[str]

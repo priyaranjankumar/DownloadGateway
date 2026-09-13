@@ -20,3 +20,8 @@ export interface MoveFileRequest {
 export interface CreateDirRequest {
   path: string
 }
+
+export interface DirGroup {
+  root: string
+  dirs: string[]
+}

@@ -31,6 +31,7 @@ class Settings(BaseSettings):
 
     # Storage
     download_dir: str = "/downloads"
+    extra_dirs: list[str] = []
     database_path: str = "./data/gateway.db"
 
     # Auth

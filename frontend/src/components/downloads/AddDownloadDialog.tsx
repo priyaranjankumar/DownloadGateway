@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAddDownload } from '@/hooks/use-downloads'
 import { useCreateSchedule } from '@/hooks/use-schedules'
@@ -30,7 +30,7 @@ export default function AddDownloadDialog() {
   
   const addDownloadMutation = useAddDownload()
   const createScheduleMutation = useCreateSchedule()
-  const { data: folders = [], isLoading: foldersLoading } = useFolderList()
+  const { data: dirGroups = [], isLoading: foldersLoading } = useFolderList()
 
   // Convert uploaded torrent file to base64
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -233,14 +233,28 @@ export default function AddDownloadDialog() {
                     <SelectItem value="__default__" className="text-xs rounded-lg focus:bg-[#4f46e5]/20 focus:text-white cursor-pointer">
                       Default (/downloads)
                     </SelectItem>
-                    {folders.map((folder) => (
-                      <SelectItem
-                        key={folder}
-                        value={`/downloads/${folder}`}
-                        className="text-xs rounded-lg focus:bg-[#4f46e5]/20 focus:text-white cursor-pointer"
-                      >
-                        /{folder}
-                      </SelectItem>
+                    {dirGroups.map((group, idx) => (
+                      <SelectGroup key={group.root}>
+                        {idx > 0 && <SelectSeparator />}
+                        <SelectLabel className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                          {group.root}
+                        </SelectLabel>
+                        <SelectItem
+                          value={group.root}
+                          className="text-xs rounded-lg focus:bg-[#4f46e5]/20 focus:text-white cursor-pointer font-medium"
+                        >
+                          {group.root}
+                        </SelectItem>
+                        {group.dirs.map((dir) => (
+                          <SelectItem
+                            key={`${group.root}/${dir}`}
+                            value={`${group.root}/${dir}`}
+                            className="text-xs rounded-lg focus:bg-[#4f46e5]/20 focus:text-white cursor-pointer pl-4"
+                          >
+                            └ {dir}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
                     ))}
                   </SelectContent>
                 </Select>

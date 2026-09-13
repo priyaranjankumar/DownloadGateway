@@ -72,6 +72,35 @@ class FileService:
             dirs.append(str(root_path.relative_to(self._root)))
         return sorted(dirs)
 
+    def list_all_roots_dirs(self) -> list[dict[str, object]]:
+        """Return directories grouped by root, including extra_dirs."""
+        groups: list[dict[str, object]] = []
+
+        # Primary download_dir
+        groups.append({
+            "root": str(self._root),
+            "dirs": self.list_dirs_recursive(),
+        })
+
+        # Extra directories
+        for extra in settings.extra_dirs:
+            extra_path = Path(extra).resolve()
+            if not extra_path.is_dir():
+                continue
+            subdirs: list[str] = []
+            for root, dirs_list, _ in os.walk(extra_path):
+                dirs_list[:] = sorted(d for d in dirs_list if not d.startswith("."))
+                root_path = Path(root)
+                if root_path == extra_path:
+                    continue
+                subdirs.append(str(root_path.relative_to(extra_path)))
+            groups.append({
+                "root": str(extra_path),
+                "dirs": sorted(subdirs),
+            })
+
+        return groups
+
     def rename(self, rel_path: str, new_name: str) -> FileEntry:
         """Rename a file or directory (same parent)."""
         source = self._resolve_path(rel_path)

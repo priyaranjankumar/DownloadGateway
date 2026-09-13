@@ -9,6 +9,7 @@ from app.schemas.files import (
     RenameRequest,
     MoveFileRequest,
     CreateDirRequest,
+    DirGroup,
 )
 from app.services.files import FileService
 from app.dependencies import get_current_user
@@ -31,13 +32,13 @@ def list_directory(
     except PermissionError as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
 
-@router.get("/dirs", response_model=list[str])
+@router.get("/dirs", response_model=list[DirGroup])
 def list_all_directories(
     username: str = Depends(get_current_user),
-) -> list[str]:
-    """Return a flat list of all directory paths under the sandbox root."""
+) -> list[DirGroup]:
+    """Return directories grouped by root (primary + extra dirs)."""
     try:
-        return file_service.list_dirs_recursive()
+        return file_service.list_all_roots_dirs()
     except FileNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except PermissionError as e:

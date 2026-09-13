@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { QUERY_KEYS } from '@/lib/constants'
-import { FileEntry, RenameRequest, MoveFileRequest, CreateDirRequest } from '@/types/files'
+import { FileEntry, RenameRequest, MoveFileRequest, CreateDirRequest, DirGroup } from '@/types/files'
 
 export function useFiles(path: string = '') {
   return useQuery<FileEntry[]>({
@@ -74,13 +74,13 @@ export function useCreateDir() {
 }
 
 export function useFolderList() {
-  return useQuery<string[]>({
+  return useQuery<DirGroup[]>({
     queryKey: QUERY_KEYS.FOLDER_LIST,
     queryFn: async () => {
-      const { data } = await api.get<string[]>('/files/dirs')
+      const { data } = await api.get<DirGroup[]>('/files/dirs')
       return data
     },
-    staleTime: 30_000, // folders change infrequently
+    staleTime: 30_000,
   })
 }
 
