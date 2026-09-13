@@ -35,8 +35,10 @@ chmod 750 /var/lib/aria2 /var/log/aria2 /etc/aria2
 touch /var/lib/aria2/aria2.session
 chown aria2:aria2 /var/lib/aria2/aria2.session
 
-# Download directories
-mkdir -p /downloads/{complete,incomplete,torrents,watch,metadata}
+# Download directories (use gateway user — in unprivileged LXC, root inside
+# the container is mapped to a non-root UID on the host and may lack write
+# access to bind-mounted paths)
+sudo -u gateway mkdir -p /downloads/{complete,incomplete,torrents,watch,metadata}
 
 # Verify directories and permissions (W access check for service users)
 echo "=== Verifying download directories access ==="
