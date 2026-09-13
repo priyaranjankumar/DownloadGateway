@@ -13,12 +13,8 @@ ExecStart=/opt/download-gateway/backend/.venv/bin/uvicorn app.main:app --host 0.
 Restart=on-failure
 RestartSec=5
 
-# Environment
-Environment=DG_SECRET_KEY=GENERATED_ON_INSTALL
-Environment=DG_ARIA2_RPC_SECRET=CHANGE_ME
-Environment=DG_DATABASE_PATH=/opt/download-gateway/data/gateway.db
-Environment=DG_DOWNLOAD_DIR=/downloads
-Environment=DG_LOG_LEVEL=INFO
+# Configuration loaded from persistent config file
+EnvironmentFile=/etc/download-gateway/config.env
 
 # Security hardening
 NoNewPrivileges=no
