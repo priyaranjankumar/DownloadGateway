@@ -30,7 +30,8 @@ export default function AddDownloadDialog() {
   
   const addDownloadMutation = useAddDownload()
   const createScheduleMutation = useCreateSchedule()
-  const { data: dirGroups = [], isLoading: foldersLoading } = useFolderList()
+  const { data: dirGroupsRaw, isLoading: foldersLoading } = useFolderList()
+  const dirGroups = Array.isArray(dirGroupsRaw) ? dirGroupsRaw : []
 
   // Convert uploaded torrent file to base64
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -233,7 +234,7 @@ export default function AddDownloadDialog() {
                     <SelectItem value="__default__" className="text-xs rounded-lg focus:bg-[#4f46e5]/20 focus:text-white cursor-pointer">
                       Default (/downloads)
                     </SelectItem>
-                    {dirGroups.map((group, idx) => (
+                    {dirGroups.filter((g) => g && g.root).map((group, idx) => (
                       <SelectGroup key={group.root}>
                         {idx > 0 && <SelectSeparator />}
                         <SelectLabel className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
@@ -245,7 +246,7 @@ export default function AddDownloadDialog() {
                         >
                           {group.root}
                         </SelectItem>
-                        {group.dirs.map((dir) => (
+                        {(group.dirs ?? []).map((dir) => (
                           <SelectItem
                             key={`${group.root}/${dir}`}
                             value={`${group.root}/${dir}`}
